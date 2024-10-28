@@ -1,0 +1,6 @@
+{
+  "start_date": "2023-01-01",
+  "base_currencies": ["BTC", "ETH", "USDT"],
+  "quote_currencies": ["USD", "EUR"],
+  "interval": 1440  
+}

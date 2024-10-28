@@ -1,0 +1,29 @@
+{
+  "type": "CATALOG",
+  "catalog": {
+    "streams": [
+      {
+        "name": "kraken_currency_rate",
+        "json_schema": {
+          "type": "object",
+          "properties": {
+            "pair": { "type": "string" },
+            "base_currency": { "type": "string" },
+            "quote_currency": { "type": "string" },
+            "time": { "type": "string", "format": "date-time" },
+            "open": { "type": "number" },
+            "high": { "type": "number" },
+            "low": { "type": "number" },
+            "close": { "type": "number" },
+            "vwap": { "type": "number" },
+            "volume": { "type": "number" },
+            "count": { "type": "integer" }
+          }
+        },
+        "supported_sync_modes": ["full_refresh", "incremental"],
+        "source_defined_cursor": true,
+        "default_cursor_field": ["time"]
+      }
+    ]
+  }
+}

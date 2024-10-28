@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OHLC Data",
+  "type": "object",
+  "properties": {
+    "pair": {
+      "type": "string"
+    },
+    "base_currency": {
+      "type": "string"
+    },
+    "quote_currency": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "open": {
+      "type": "string"
+    },
+    "high": {
+      "type": "string"
+    },
+    "low": {
+      "type": "string"
+    },
+    "close": {
+      "type": "string"
+    },
+    "vwap": {
+      "type": "string"
+    },
+    "volume": {
+      "type": "string"
+    },
+    "count": {
+      "type": "integer"
+    }
+  }
+}

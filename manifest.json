@@ -1,0 +1,42 @@
+{
+  "version": "0.1.0",
+  "name": "Kraken OHLC Source Connector",
+  "dockerRepository": "lmilyutina/source-kraken-ohlc",
+  "dockerImageTag": "latest",
+  "documentationUrl": "https://docs.airbyte.com/integrations/sources/kraken-ohlc",
+  "author": "lmilyutina",
+  "sourceType": "python",
+  "icon": "kraken.svg",
+  "spec": {
+    "connectionSpecification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Kraken OHLC Source Spec",
+      "type": "object",
+      "required": ["start_date", "base_currencies", "quote_currencies"],
+      "properties": {
+        "start_date": {
+          "type": "string",
+          "title": "Start Date",
+          "description": "The start date for fetching data in YYYY-MM-DD format",
+          "examples": ["2020-01-01"]
+        },
+        "base_currencies": {
+          "type": "array",
+          "title": "Base Currencies",
+          "description": "List of base currencies to fetch",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quote_currencies": {
+          "type": "array",
+          "title": "Quote Currencies",
+          "description": "List of quote currencies to fetch",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
