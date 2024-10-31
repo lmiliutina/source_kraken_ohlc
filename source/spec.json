@@ -1,0 +1,37 @@
+{
+  "documentationUrl": "https://docs.airbyte.com/integrations/sources/kraken-ohlc",
+  "connectionSpecification": {
+    "type": "object",
+    "required": [
+      "start_date",
+      "base_currencies",
+      "quote_currencies"
+    ],
+    "properties": {
+      "start_date": {
+        "type": "string",
+        "format": "date",
+        "description": "The start date for fetching OHLC data (YYYY-MM-DD)."
+      },
+      "base_currencies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of base currencies to fetch data for."
+      },
+      "quote_currencies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of quote currencies to filter pairs."
+      },
+      "interval": {
+        "type": "integer",
+        "description": "Interval in minutes for OHLC data. Default is 1440 (1 day).",
+        "default": 1440
+      }
+    }
+  }
+}

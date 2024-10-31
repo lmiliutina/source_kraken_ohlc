@@ -1,0 +1,4 @@
+airbyte/*
+airbyte
+airbyte_data
+docker-compose

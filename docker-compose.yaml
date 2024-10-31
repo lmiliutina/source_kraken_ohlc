@@ -1,0 +1,202 @@
+services:
+  airbyte-server:
+    container_name: airbyte-server
+    image: airbyte/server:build-3e09caa07d-20509-master
+    restart: always
+    ports:
+      - "8001:8000"
+    tty: true
+    environment:
+      - AIRBYTE_WORKSPACE_ROOT=/airbyte/integration_code
+      - DATABASE_URL=jdbc:postgresql://user-postgres:5432/airbyte_db
+      - DATABASE_USER=airbyte
+      - DATABASE_PASSWORD=password
+      - TEMPORAL_SERVICE_ADDRESS=airbyte-temporal:7233
+      - TEMPORAL_HOST=airbyte-temporal:7233
+      - TEMPORAL_SERVICE_PORT=7233
+      - TEMPORAL_SERVICE_NAMESPACE=default
+      - TEMPORAL_SERVICE_TASK_QUEUE=airbyte_server
+      - DATABASE_DB=airbyte_db
+      - TEMPORAL_NAMESPACE=default
+      - STORAGE_LOCAL_ROOT=/airbyte_data
+      - STORAGE_TYPE=LOCAL
+      - LOG_LEVEL=DEBUG
+      - AIRBYTE_STORAGE_TYPE=LOCAL
+      - airbyte.cloud.storage.bucket.log=/airbyte_data//logs
+      - airbyte.cloud.storage.bucket.state=/airbyte_data//state
+      - airbyte.cloud.storage.bucket.workload-output=/airbyte_data//workload_output
+      - airbyte.cloud.storage.bucket.activity=/airbyte_data/activity_payload
+      - airbyte.cloud.storage.bucket.activity-payload=/airbyte_data/activity_payload
+      - airbyte.connector-registry.enterprise.enterprise-source-stubs-url=https://example.com/enterprise-stubs  # фиктивный URL
+      - airbyte.flyway.baseline-on-migrate=true  # указывает Flyway принять текущую схему как базовую
+      - airbyte.flyway.configs.minimum-migration-version=0  # минимальная версия миграции
+      - LOGGING_LEVEL=DEBUG
+      - METRIC_COLLECTION_ENABLED=true
+    networks:
+      - integration
+      - ezra_network
+    volumes:
+      - airbyte_data:/airbyte_data
+    depends_on:
+      - airbyte-temporal
+
+  airbyte-api-server:
+    image: airbyte/airbyte-api-server:build-d9d9accd5b-19343-master
+    container_name: airbyte-api-server
+    restart: always
+    environment:
+      - AIRBYTE_API_URL=http:/airbyte-server:8001
+      - DATABASE_URL=jdbc:postgresql://user-postgres:5432/airbyte_db
+      - DATABASE_USER=airbyte
+      - DATABASE_PASSWORD=password
+      - DATABASE_DB=airbyte_db
+    depends_on:
+      - airbyte-server
+    networks:
+      - integration
+      - ezra_network
+
+  airbyte-webapp:
+    image: airbyte/webapp:cloud-prod-build-3e09caa07d-20509-master
+    restart: always
+    ports:
+      - "9001:80"
+    environment:
+      - AIRBYTE_API_URL=http:/airbyte-server:8001
+    depends_on:
+      - airbyte-server
+    networks:
+      - integration
+      - ezra_network
+
+  connector:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: integration_connector
+    image: service-dev
+    environment:
+      - AIRBYTE_ENTRYPOINT="python -m source.main read --debug --config /app/source/config.json --catalog /app/source/catalog.json"
+      - AIRBYTE_API_URL=http:/airbyte-server:8001
+    volumes:
+      - .:/app
+    depends_on:
+      - airbyte-api-server
+      - airbyte-webapp
+      - airbyte-server
+    networks:
+      - integration
+      - ezra_network
+    command: python -m source.main read --debug --config /app/source/config.json --catalog /app/source/catalog.json
+
+  airbyte-temporal:
+    image: temporalio/auto-setup:latest
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - DB_USER=airbyte
+      - DB_PWD=password
+      - DB_NAME=airbyte_db
+      - DB_SCHEMA=public
+      - DB_HOST=user-postgres
+      # - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+      - POSTGRES_PWD=admin
+      - POSTGRES_SEEDS=user-postgres
+      - POSTGRES_USER=admin
+      - SKIP_SCHEMA_SETUP=true
+      - TEMPORAL_CLI_ADDRESS=airbyte-temporal:7233
+      - TEMPORAL_ADDRESS=airbyte-temporal:7233
+      - PERSISTENCE_DEFAULT=postgresql
+      - PERSISTENCE_DATASTORE=postgresql
+      - PERSISTENCE_DATASTORES_DEFAULT_TYPE=postgresql
+      - NAMESPACE=default
+      - TEMPORAL_LOG_LEVEL=debug
+      - PERSISTENCE_POSTGRESQL_ADDRESS=user-postgres:5432
+      - PERSISTENCE_POSTGRESQL_DATABASE=airbyte_db
+      - PERSISTENCE_POSTGRESQL_USER=airbyte
+      - PERSISTENCE_POSTGRESQL_PASSWORD=password
+      - PERSISTENCE_POSTGRESQL_SCHEMA=public
+      - PERSISTENCE_PLUGIN=postgresql
+      - PERSISTENCE_PLUGIN_POSTGRESQL_DATABASE=airbyte_db
+      - PERSISTENCE_PLUGIN_POSTGRESQL_USER=airbyte
+      - PERSISTENCE_PLUGIN_POSTGRESQL_PASSWORD=password
+      - PERSISTENCE_PLUGIN_POSTGRESQL_SCHEMA=public
+      - PERSISTENCE_PLUGIN_POSTGRESQL_ADDRESS=user-postgres:5432
+      - PERSISTENCE_PLUGIN_POSTGRESQL_TLS_ENABLED=false
+      - ADMIN_PORT=7233
+      - FLAG_ALLOW_NO_AUTH=true
+    ports:
+      - "7233:7233"
+    networks:
+      - integration
+      - ezra_network
+
+volumes:
+  airbyte_data:
+
+networks:
+  integration:
+    name: integration
+  ezra_network:
+    external: true
+
+
+# services:
+#   airbyte:
+#     container_name: integration_airbyte
+#     image: airbyte/airbyte:latest
+#     depends_on:
+#       - airbyte_db
+#     ports:
+#       - "8001:8001"
+#     # volumes:
+#     #   - ./airbyte_config:/config
+#     tty: true
+#     # command: airbyte-dev server all --config /config/airbyte_server_config.json
+#     command: airbyte-dev server all
+
+#   airbyte_db:
+#     image: postgres:13-alpine
+#     container_name: airbyte_db
+#     environment:
+#       POSTGRES_USER: airbyte
+#       POSTGRES_PASSWORD: password
+#       POSTGRES_DB: airbyte
+#     volumes:
+#       - airbyte_db_data:/var/lib/postgresql/data
+
+#   connector:
+#     build:
+#       context: .
+#       dockerfile: ./docker/Dockerfile
+#     container_name: integration_connector
+#     image: service-dev
+#     environment:
+#       - AIRBYTE_ENTRYPOINT="python /airbyte/integration_code/main.py"
+#     volumes:
+#       - .:/app
+#     depends_on:
+#       - airbyte
+#     networks:
+#       - integration
+#     command: python /airbyte/integration_code/main.py
+
+#   api_server:
+#     container_name: integration_server
+#     image: service-dev
+#     depends_on:
+#       - airbyte
+#     ports:
+#       - "8800:8080"
+#     volumes:
+#       - .:/app
+#     command: uvicorn service.${APP}:app --host 0.0.0.0 --port 8080 --reload
+#     networks:
+#       - integration
+
+# volumes:
+#   airbyte_db_data:
+
+# networks:
+#   integration:
+#     name: integration
