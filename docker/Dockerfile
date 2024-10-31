@@ -19,6 +19,6 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --upgrade -r prod.txt
 
 
-ENV AIRBYTE_API_URL "http:/airbyte-server:8001"
-ENV AIRBYTE_ENTRYPOINT "python -m source.main stream"
-ENTRYPOINT ["python", "-m", "source.main", "spec"]
+ENV AIRBYTE_API_URL "http://localhost:8001"
+ENV AIRBYTE_ENTRYPOINT "python -m source.main read --config /source/config.json --catalog /source/catalog.json"
+ENTRYPOINT ["python", "-m", "source.main", "read" "--debug", "--config", "/source/config.json", "--catalog", "/source/catalog.json"]
